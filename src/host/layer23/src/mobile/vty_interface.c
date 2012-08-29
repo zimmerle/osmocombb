@@ -301,6 +301,29 @@ void gsm_cs_dump(struct catcher_status *cs, struct vty *vty)
 	vty_out(vty, "%s", VTY_NEWLINE);
 }
 
+DEFUN(find_imsi, find_imsi_cmd, "find imsi [MS_NAME] [NUMBER]",
+	SHOW_STR "Try to find a imsi from a MS near by\n")
+{
+	struct osmocom_ms *ms;
+
+	vty_out(vty, "Currentyl connected to:%s", VTY_NEWLINE);
+	llist_for_each_entry(ms, &ms_list, entity) {
+		vty_out(vty, "Status for MS '%s'%s", ms->name, VTY_NEWLINE);
+		//gsm_cs_dump(&ms->catch_stat, vty);
+	}
+
+
+
+
+	vty_out(vty, "Listing vty on the following mobile stations:%s", VTY_NEWLINE);
+	llist_for_each_entry(ms, &ms_list, entity) {
+		vty_out(vty, "Status for MS '%s'%s", ms->name, VTY_NEWLINE);
+		//gsm_cs_dump(&ms->catch_stat, vty);
+	}
+
+	return CMD_SUCCESS;
+}
+
 DEFUN(show_catcher, show_catcher_cmd, "show catcher [MS_NAME]",
 	SHOW_STR "Display catcher detection status for given MS\n")
 {
@@ -2823,6 +2846,7 @@ int ms_vty_init(void)
 {
 	install_element_ve(&show_ms_cmd);
 	install_element_ve(&show_catcher_cmd);
+	install_element_ve(&find_imsi_cmd);
 	install_element_ve(&show_subscr_cmd);
 	install_element_ve(&show_support_cmd);
 	install_element_ve(&show_cell_cmd);

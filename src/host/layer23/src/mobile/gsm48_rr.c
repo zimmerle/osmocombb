@@ -4849,10 +4849,13 @@ static int gsm48_rr_rx_pch_agch(struct osmocom_ms *ms, struct msgb *msg)
 
 	switch (sih->system_information) {
 	case GSM48_MT_RR_PAG_REQ_1:
+		imsi_finder_paging(ms, msg);
 		return gsm48_rr_rx_pag_req_1(ms, msg);
 	case GSM48_MT_RR_PAG_REQ_2:
+		imsi_finder_paging(ms, msg);
 		return gsm48_rr_rx_pag_req_2(ms, msg);
 	case GSM48_MT_RR_PAG_REQ_3:
+		imsi_finder_paging(ms, msg);
 		return gsm48_rr_rx_pag_req_3(ms, msg);
 
 	case GSM48_MT_RR_IMM_ASS:
