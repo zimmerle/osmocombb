@@ -185,9 +185,9 @@ static void log_sysinfo(void)
 	if (log_si.ta != 0xff)
 		sprintf(ta_str, " TA=%d", log_si.ta);
 
-	LOGP(DSUM, LOGL_INFO, "Cell: ARFCN=%d MCC=%s MNC=%s (%s, %s)%s\n",
+	LOGP(DSUM, LOGL_INFO, "Cell: ARFCN=%d MCC=%s MNC=%s (%s, %s) LAC=%d ID=%d %s\n",
 		arfcn, gsm_print_mcc(s->mcc), gsm_print_mnc(s->mnc),
-		gsm_get_mcc(s->mcc), gsm_get_mnc(s->mcc, s->mnc), ta_str);
+		gsm_get_mcc(s->mcc), gsm_get_mnc(s->mcc, s->mnc), s->lac, s->cell_id, ta_str);
 
 	LOGFILE("[sysinfo]\n");
 	LOGFILE("arfcn %d\n", s->arfcn);

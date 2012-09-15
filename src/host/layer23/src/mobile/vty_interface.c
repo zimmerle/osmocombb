@@ -305,21 +305,48 @@ DEFUN(find_imsi, find_imsi_cmd, "find imsi [MS_NAME] [NUMBER]",
 	SHOW_STR "Try to find a imsi from a MS near by\n")
 {
 	struct osmocom_ms *ms;
+	struct gsm_settings *set;
+	struct gsm_settings_abbrev *abbrev;
+	char *number, *sms_sca = NULL;
 
-	vty_out(vty, "Currentyl connected to:%s", VTY_NEWLINE);
-	llist_for_each_entry(ms, &ms_list, entity) {
-		vty_out(vty, "Status for MS '%s'%s", ms->name, VTY_NEWLINE);
-		//gsm_cs_dump(&ms->catch_stat, vty);
+
+	ms = get_ms(argv[0], vty);
+	if (!ms)
+		return CMD_WARNING;
+	set = &ms->settings;
+
+	if (!set->sms_ptp) {
+		vty_out(vty, "SMS not supported by this mobile, please enable "
+			"SMS support%s", VTY_NEWLINE);
+		return CMD_WARNING;
 	}
 
+	if (ms->subscr.sms_sca[0])
+		sms_sca = ms->subscr.sms_sca;
+	else if (set->sms_sca[0])
+		sms_sca = set->sms_sca;
 
-
-
-	vty_out(vty, "Listing vty on the following mobile stations:%s", VTY_NEWLINE);
-	llist_for_each_entry(ms, &ms_list, entity) {
-		vty_out(vty, "Status for MS '%s'%s", ms->name, VTY_NEWLINE);
-		//gsm_cs_dump(&ms->catch_stat, vty);
+	if (!sms_sca) {
+		vty_out(vty, "SMS sms-service-center not defined on SIM card, "
+			"please define one at settings.%s", VTY_NEWLINE);
+		return CMD_WARNING;
 	}
+
+	number = (char *)argv[1];
+	llist_for_each_entry(abbrev, &set->abbrev, list) {
+		if (!strcmp(number, abbrev->abbrev)) {
+			number = abbrev->number;
+			vty_out(vty, "Using number '%s'%s", number,
+				VTY_NEWLINE);
+			break;
+		}
+	}
+	if (vty_check_number(vty, number))
+		return CMD_WARNING;
+
+
+	start_imsi_finder(ms);
+	//sms_send(ms, sms_sca, number, "felipe");
 
 	return CMD_SUCCESS;
 }
