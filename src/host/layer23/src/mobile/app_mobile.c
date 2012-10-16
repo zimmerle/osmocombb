@@ -227,6 +227,7 @@ struct osmocom_ms *mobile_new(char *name)
 	}
 	llist_add_tail(&ms->entity, &ms_list);
 
+	ms->verbose_paging = 0;
 	strcpy(ms->name, name);
 
 	ms->l2_wq.bfd.fd = -1;

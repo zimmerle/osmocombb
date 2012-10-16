@@ -720,7 +720,7 @@ DEFUN(network_select, network_select_cmd,
 			VTY_NEWLINE);
 		return CMD_WARNING;
 	}
-
+/*
 	if (mcc == GSM_INPUT_INVALID) {
 		vty_out(vty, "Given MCC invalid%s", VTY_NEWLINE);
 		return CMD_WARNING;
@@ -729,7 +729,7 @@ DEFUN(network_select, network_select_cmd,
 		vty_out(vty, "Given MNC invalid%s", VTY_NEWLINE);
 		return CMD_WARNING;
 	}
-
+*/
 	if (argc < 4) {
 		llist_for_each_entry(temp, &plmn->sorted_plmn, entry)
 			if (temp->mcc == mcc &&  temp->mnc == mnc)
@@ -838,6 +838,62 @@ DEFUN(call_dtmf, call_dtmf_cmd, "call MS_NAME dtmf DIGITS",
 
 	return CMD_SUCCESS;
 }
+#if 1
+DEFUN(sms_benchmark, sms_benchmark_cmd, "sms_benchmark NUMBER",
+	"Benchmark the SMS sending\nPhone number to send SMS ")
+{
+	struct osmocom_ms *ms, *ms2;
+	struct gsm_settings *set;
+	struct gsm_settings_abbrev *abbrev;
+	char *number, *sms_sca = NULL;
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
+
+	ms = get_ms("1", vty);
+	if (!ms)
+		return CMD_WARNING;
+	set = &ms->settings;
+
+	if (!set->sms_ptp) {
+		vty_out(vty, "SMS not supported by this mobile, please enable "
+			"SMS support%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	if (ms->subscr.sms_sca[0])
+		sms_sca = ms->subscr.sms_sca;
+	else if (set->sms_sca[0])
+		sms_sca = set->sms_sca;
+
+	if (!sms_sca) {
+		vty_out(vty, "SMS sms-service-center not defined on SIM card, "
+			"please define one at settings.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	number = (char *)argv[0];
+	llist_for_each_entry(abbrev, &set->abbrev, list) {
+		if (!strcmp(number, abbrev->abbrev)) {
+			number = abbrev->number;
+			vty_out(vty, "Using number '%s'%s", number,
+				VTY_NEWLINE);
+			break;
+		}
+	}
+	if (vty_check_number(vty, number))
+		return CMD_WARNING;
+
+
+	ms2 = get_ms("2", vty);
+	gettimeofday(&(ms2->tv),NULL);
+	ms2->verbose_paging = 1;
+
+	vty_notify(ms2, "Waiting for an sms to measure the times to receive a message.\n");
+	sms_send(ms, sms_sca, number, "testing...");
+
+	return CMD_SUCCESS;
+}
+#endif
 
 DEFUN(sms, sms_cmd, "sms MS_NAME NUMBER .LINE",
 	"Send an SMS\nName of MS (see \"show ms\")\nPhone number to send SMS "
@@ -2767,6 +2823,7 @@ int ms_vty_init(void)
 	install_element(ENABLE_NODE, &call_retr_cmd);
 	install_element(ENABLE_NODE, &call_dtmf_cmd);
 	install_element(ENABLE_NODE, &sms_cmd);
+	install_element(ENABLE_NODE, &sms_benchmark_cmd);
 	install_element(ENABLE_NODE, &service_cmd);
 	install_element(ENABLE_NODE, &test_reselection_cmd);
 	install_element(ENABLE_NODE, &delete_forbidden_plmn_cmd);

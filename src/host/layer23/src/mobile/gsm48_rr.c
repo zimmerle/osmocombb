@@ -2103,6 +2103,32 @@ static int gsm48_rr_chan2cause[4] = {
 	RR_EST_CAUSE_ANS_PAG_TCH_ANY
 };
 
+
+     int
+     timeval_subtract (result, x, y)
+          struct timeval *result, *x, *y;
+     {
+       /* Perform the carry for the later subtraction by updating y. */
+       if (x->tv_usec < y->tv_usec) {
+         int nsec = (y->tv_usec - x->tv_usec) / 1000000 + 1;
+         y->tv_usec -= 1000000 * nsec;
+         y->tv_sec += nsec;
+       }
+       if (x->tv_usec - y->tv_usec > 1000000) {
+         int nsec = (x->tv_usec - y->tv_usec) / 1000000;
+         y->tv_usec += 1000000 * nsec;
+         y->tv_sec -= nsec;
+       }
+     
+       /* Compute the time remaining to wait.
+          tv_usec is certainly positive. */
+       result->tv_sec = x->tv_sec - y->tv_sec;
+       result->tv_usec = x->tv_usec - y->tv_usec;
+     
+       /* Return 1 if result is negative. */
+       return x->tv_sec < y->tv_sec;
+     }
+
 /* given LV of mobile identity is checked agains ms */
 static uint8_t gsm_match_mi(struct osmocom_ms *ms, uint8_t *mi)
 {
@@ -2110,6 +2136,8 @@ static uint8_t gsm_match_mi(struct osmocom_ms *ms, uint8_t *mi)
 	char imsi[16];
 	uint32_t tmsi;
 	uint8_t mi_type;
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
 
 	if (mi[0] < 1)
 		return 0;
@@ -2126,6 +2154,14 @@ static uint8_t gsm_match_mi(struct osmocom_ms *ms, uint8_t *mi)
 			LOGP(DPAG, LOGL_INFO, " TMSI %08x matches\n",
 				ntohl(tmsi));
 
+			if (ms->verbose_paging)
+			{
+				struct timeval tv_tmp;
+				timeval_subtract (&tv_tmp, &tv, &(ms->tv));
+				vty_notify(ms, "Received an paging request tv delta: %ld %ld\n", tv_tmp.tv_sec, tv_tmp.tv_usec);
+				ms->verbose_paging = 0;
+			}
+
 			return mi_type;
 		} else
 			LOGP(DPAG, LOGL_INFO, " TMSI %08x (not for us)\n",
@@ -2135,6 +2171,14 @@ static uint8_t gsm_match_mi(struct osmocom_ms *ms, uint8_t *mi)
 		gsm48_mi_to_string(imsi, sizeof(imsi), mi + 1, mi[0]);
 		if (!strcmp(imsi, ms->subscr.imsi)) {
 			LOGP(DPAG, LOGL_INFO, " IMSI %s matches\n", imsi);
+
+			if (ms->verbose_paging)
+			{
+				struct timeval tv_tmp;
+				timeval_subtract (&tv_tmp, &tv, &(ms->tv));
+				vty_notify(ms, "Received an paging request tv delta: %ld %ld\n", tv_tmp.tv_sec, tv_tmp.tv_usec);
+				ms->verbose_paging = 0;
+			}
 
 			return mi_type;
 		} else
@@ -4719,6 +4763,8 @@ static int gsm48_rr_rx_bcch(struct osmocom_ms *ms, struct msgb *msg)
 static int gsm48_rr_rx_pch_agch(struct osmocom_ms *ms, struct msgb *msg)
 {
 	struct gsm48_system_information_type_header *sih = msgb_l3(msg);
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
 
 	switch (sih->system_information) {
 	case GSM48_MT_RR_PAG_REQ_1:

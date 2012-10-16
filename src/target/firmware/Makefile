@@ -4,7 +4,7 @@
 BOARDS?=compal_e88 compal_e86 compal_e99 se_j100 gta0x pirelli_dpl10
 
 # List of all applications (meant to be overridden on command line)
-APPLICATIONS?=hello_world compal_dsp_dump layer1 loader chainload rssi
+APPLICATIONS?=hello_world compal_dsp_dump layer1 loader chainload 
 
 # Framebuffer support, board specific drivers
 # 	
@@ -99,7 +99,7 @@ ANY_APP_LIBS+=calypso/libcalypso.a layer1/liblayer1.a lib/libmini.a comm/libcomm
 -include Makefile.inc
 
 # Uncomment this line if you want to enable Tx (Transmit) Support.
-#CFLAGS += -DCONFIG_TX_ENABLE
+CFLAGS += -DCONFIG_TX_ENABLE
 
 # Uncomment this line if you want to write to flash.
 #CFLAGS += -DCONFIG_FLASH_WRITE
